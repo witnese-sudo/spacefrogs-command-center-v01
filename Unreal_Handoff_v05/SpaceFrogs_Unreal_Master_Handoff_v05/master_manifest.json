@@ -1,0 +1,9 @@
+{
+  "pack": "SpaceFrogs_Unreal_Master_Handoff_v05",
+  "root": "Content/FROG_GAME",
+  "folders": 47,
+  "greybox_modules": 10,
+  "concept_glb_included": true,
+  "primary_map": "Content/FROG_GAME/Sector7F/Maps/LVL_Sector7F_BioforgeBreach",
+  "canon": "Frogs first. Biotech second. Machine third."
+}
