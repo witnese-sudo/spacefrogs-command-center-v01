@@ -1,0 +1,17 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "SpaceFrogs Progression",
+  "Description": "FIRST SIGNAL hub, inventory, loadout and save proof runtime.",
+  "Category": "SPACEFROGS",
+  "EnabledByDefault": false,
+  "CanContainContent": true,
+  "Modules": [
+    {
+      "Name": "SpaceFrogsProgression",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
