@@ -57,7 +57,7 @@ foreach ($file in $files) {
 
 $result | Sort-Object Role, Name | Format-Table -AutoSize
 
-$heightCandidates = $result | Where-Object { $_.Role -eq "HEIGHT_CANDIDATE" }
+$heightCandidates = @($result | Where-Object { $_.Role -eq "HEIGHT_CANDIDATE" })
 
 Write-Host ""
 if ($heightCandidates.Count -eq 1) {
