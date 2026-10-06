@@ -1,0 +1,20 @@
+name: Genesis autostart script checks
+on:
+  push:
+    branches: [review/genesis-autostart-v01]
+  pull_request:
+    paths:
+      - 'frog-game/unreal/scripts/*GENESIS*.ps1'
+      - 'frog-game/unreal/scripts/tests/**'
+      - '.github/workflows/genesis-autostart-checks.yml'
+jobs:
+  script-checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Windows PowerShell syntax and discovery hard stops
+        shell: powershell
+        run: ./frog-game/unreal/scripts/tests/GENESIS_AUTOSTART_TEST_v01.ps1
+      - name: Assistant identity and hard stops
+        shell: powershell
+        run: ./frog-game/unreal/scripts/tests/GENESIS_ASSISTANT_TEST_v01.ps1
