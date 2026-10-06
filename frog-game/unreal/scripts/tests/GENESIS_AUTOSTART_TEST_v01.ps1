@@ -51,41 +51,42 @@ try {
             New-Item -ItemType Directory -Path $docs -Force | Out-Null
             $editor = Join-Path $temp 'UnrealEditor.exe'
             Set-Content -LiteralPath $editor -Value 'fixture, never executed'
-            $script:launches = @(); $script:running = $false
-            function Get-Process { if ($script:running) { [pscustomobject]@{ Name = 'UnrealEditor' } } }
+            $global:GenesisTestLaunches = @(); $global:GenesisTestRunning = $false
+            function Get-Process { if ($global:GenesisTestRunning) { [pscustomobject]@{ Name = 'UnrealEditor' } } }
             function Start-Process {
                 param($FilePath, $ArgumentList, $WorkingDirectory)
-                $script:launches += [pscustomobject]@{ Editor = $FilePath; Args = $ArgumentList; Dir = $WorkingDirectory }
+                $global:GenesisTestLaunches += [pscustomobject]@{ Editor = $FilePath; Args = $ArgumentList; Dir = $WorkingDirectory }
             }
             $runner = Join-Path $scripts 'GENESIS_AUTOSTART_v01.ps1'
             & $runner -EditorPath $editor
-            Assert ($LASTEXITCODE -eq 2 -and $script:launches.Count -eq 0) 'Runner empty must not launch'
+            Assert ($LASTEXITCODE -eq 2 -and $global:GenesisTestLaunches.Count -eq 0) 'Runner empty must not launch'
             $project = Join-Path $docs 'FROG3D_v01.uproject'
             Set-Content -LiteralPath $project -Value '{}'
             & $runner -EditorPath $editor
-            Assert ($LASTEXITCODE -eq 0 -and $script:launches.Count -eq 1) 'Runner success'
-            Assert ($script:launches[0].Args -eq ('"' + $project + '"')) 'Runner exact quoted project'
-            $script:running = $true
+            Assert ($LASTEXITCODE -eq 0 -and $global:GenesisTestLaunches.Count -eq 1) 'Runner success'
+            Assert ($global:GenesisTestLaunches[0].Args -eq ('"' + $project + '"')) 'Runner exact quoted project'
+            $global:GenesisTestRunning = $true
             & $runner -EditorPath $editor
-            Assert ($LASTEXITCODE -eq 1 -and $script:launches.Count -eq 1) 'Running editor must block'
-            $script:running = $false
+            Assert ($LASTEXITCODE -eq 1 -and $global:GenesisTestLaunches.Count -eq 1) 'Running editor must block'
+            $global:GenesisTestRunning = $false
             & $runner -EditorPath (Join-Path $temp 'missing.exe')
-            Assert ($LASTEXITCODE -eq 1 -and $script:launches.Count -eq 1) 'Missing editor must block'
+            Assert ($LASTEXITCODE -eq 1 -and $global:GenesisTestLaunches.Count -eq 1) 'Missing editor must block'
             $duplicate = Join-Path $docs 'duplicate'
             New-Item -ItemType Directory -Path $duplicate | Out-Null
             Set-Content -LiteralPath (Join-Path $duplicate 'FROG3D_v01.uproject') -Value '{}'
             & $runner -EditorPath $editor
-            Assert ($LASTEXITCODE -eq 3 -and $script:launches.Count -eq 1) 'Stale success must not bypass duplicate block'
+            Assert ($LASTEXITCODE -eq 3 -and $global:GenesisTestLaunches.Count -eq 1) 'Stale success must not bypass duplicate block'
             Remove-Item -LiteralPath $project
             Remove-Item -LiteralPath $duplicate -Recurse
             Set-Content -LiteralPath (Join-Path $docs 'One.uproject') -Value '{}'
             Set-Content -LiteralPath (Join-Path $docs 'Two.uproject') -Value '{}'
             & $runner -EditorPath $editor
-            Assert ($LASTEXITCODE -eq 4 -and $script:launches.Count -eq 1) 'Ambiguous runner must not launch'
+            Assert ($LASTEXITCODE -eq 4 -and $global:GenesisTestLaunches.Count -eq 1) 'Ambiguous runner must not launch'
             Write-Host 'PASS: 6 Windows runner scenarios with intercepted launch (not runtime proof).'
         } finally {
             $env:USERPROFILE = $oldProfile; $env:LOCALAPPDATA = $oldLocal
             Remove-Item Function:Get-Process, Function:Start-Process -ErrorAction SilentlyContinue
+            Remove-Variable GenesisTestLaunches, GenesisTestRunning -Scope Global -ErrorAction SilentlyContinue
         }
     } else {
         Write-Host 'SKIPPED: Windows-only runner launch interception checks.'
