@@ -43,3 +43,19 @@ Local acceptance must record checkout commit, Windows/PowerShell version, exact 
 6. Remove the hook and repeat login: no Genesis autostart. Confirm unrelated startup entries unchanged.
 
 Only mark the tested startup behavior VERIFIED after those local checks pass. Conversational AI, voice, gameplay, save/redeploy and hub systems each still require their own implementation and runtime proof. No merge is part of this change.
+
+## Explicit selection and existing local LUXA assistant
+
+After a human selects the project, pass `-ProjectPath` to installer/runner. Discovery still scans approved roots, requires that exact file to be among its candidates, and returns exit 6 if it is outside them. Without an explicit path, all original 2/3/4 stops remain unchanged. This is recorded human selection, never a latest-file heuristic. A missing selected file blocks with an error.
+
+For the existing LUXA workspace, pass `-AssistantRoot` to the installer. The runner first validates its known npm dev command and files, checks that any listener on 8080 belongs to that workspace's Node/Vite process, starts `npm run dev` only if needed, waits for the identified page, then opens it in the default browser. Foreign listeners and changed commands block. It does not trigger microphone, paid AI requests, memory snapshots or Sentinel missions. An existing Unreal editor still blocks a second editor while the independently validated assistant can open.
+
+On DISSART the selected game is `Documents/Unreal Projects/SF_GenesisSwamp 5.8/SF_GenesisSwamp.uproject`, engine 5.8; the local assistant is `Downloads/W007JSjminO4Y7ei-grok-workspace`. Its old `LUXA_HEART_OF_GENESIS.cmd` startup hook must be moved to a backup outside Startup before enabling the combined hook, to avoid duplicate startup paths. This old hook exists locally, not in PR #3. Restore the backup and remove the combined shortcut to undo the replacement. Do not change Ollama or unrelated startup entries.
+
+Installation example (use verified actual paths in `$editor`, `$project`, `$assistant`):
+
+```powershell
+./frog-game/unreal/scripts/SET_GENESIS_AUTOSTART_v01.ps1 -EditorPath $editor -ProjectPath $project -AssistantRoot $assistant
+```
+
+Opening the page and its HTTP status are not proof of an AI answer, microphone, Suno voice or audio output. A browser may require a user click for microphone/audio. Actual Windows-login proof remains pending until a real login test is observed.

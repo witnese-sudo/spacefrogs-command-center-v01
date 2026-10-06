@@ -1,7 +1,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [ValidateSet("Install", "Remove")][string]$Action = "Install",
-    [string]$EditorPath
+    [string]$EditorPath,
+    [string]$ProjectPath = "",
+    [string]$AssistantRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +25,13 @@ if (-not $EditorPath -or -not [IO.Path]::IsPathRooted($EditorPath) -or
     [IO.Path]::GetFileName($EditorPath) -ne "UnrealEditor.exe") {
     throw "BLOCKED: Supply the absolute path to the intended UnrealEditor.exe. No engine guessing."
 }
+if ($ProjectPath -and (-not [IO.Path]::IsPathRooted($ProjectPath) -or
+    -not (Test-Path -LiteralPath $ProjectPath -PathType Leaf) -or
+    [IO.Path]::GetExtension($ProjectPath) -ne ".uproject")) { throw "BLOCKED: Invalid explicit project path." }
+if ($AssistantRoot -and (-not [IO.Path]::IsPathRooted($AssistantRoot) -or
+    -not (Test-Path -LiteralPath (Join-Path $AssistantRoot "src\field\luxaLive.ts")))) {
+    throw "BLOCKED: Invalid Genesis/LUXA assistant root."
+}
 $runner = Join-Path $PSScriptRoot "GENESIS_AUTOSTART_v01.ps1"
 $discovery = Join-Path $PSScriptRoot "GENESIS_DISCOVER_RUNTIME_v01.ps1"
 if (-not (Test-Path -LiteralPath $runner) -or -not (Test-Path -LiteralPath $discovery)) {
@@ -32,6 +41,8 @@ if ($PSCmdlet.ShouldProcess($linkPath, "Install current-user Genesis hook at log
     $link = $shell.CreateShortcut($linkPath)
     $link.TargetPath = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
     $link.Arguments = '-NoProfile -NonInteractive -File "' + $runner + '" -EditorPath "' + $EditorPath + '"'
+    if ($ProjectPath) { $link.Arguments += ' -ProjectPath "' + $ProjectPath + '"' }
+    if ($AssistantRoot) { $link.Arguments += ' -AssistantRoot "' + $AssistantRoot + '"' }
     $link.WorkingDirectory = $PSScriptRoot
     $link.Description = $owner
     $link.Save()

@@ -15,3 +15,6 @@ jobs:
       - name: Windows PowerShell syntax and discovery hard stops
         shell: powershell
         run: ./frog-game/unreal/scripts/tests/GENESIS_AUTOSTART_TEST_v01.ps1
+      - name: Assistant identity and hard stops
+        shell: powershell
+        run: ./frog-game/unreal/scripts/tests/GENESIS_ASSISTANT_TEST_v01.ps1

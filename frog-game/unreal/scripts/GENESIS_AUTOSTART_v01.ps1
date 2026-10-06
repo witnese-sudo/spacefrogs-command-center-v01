@@ -1,5 +1,7 @@
 param(
-    [Parameter(Mandatory = $true)][string]$EditorPath
+    [Parameter(Mandatory = $true)][string]$EditorPath,
+    [string]$ProjectPath = "",
+    [string]$AssistantRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -16,6 +18,9 @@ try {
     Start-Transcript -Path (Join-Path $logDir ("startup-" + [guid]::NewGuid() + ".log")) | Out-Null
     $transcribing = $true
     Write-Host "[GENESIS] GENERATED / NOT YET LOCAL-RUNTIME-VERIFIED"
+    if ($AssistantRoot) {
+        & (Join-Path $PSScriptRoot "GENESIS_ASSISTANT_START_v01.ps1") -AssistantRoot $AssistantRoot
+    }
     if (-not (Test-Path -LiteralPath $EditorPath -PathType Leaf) -or
         [IO.Path]::GetFileName($EditorPath) -ne "UnrealEditor.exe") {
         throw "BLOCKED: Explicit UnrealEditor.exe path is missing or invalid."
@@ -25,7 +30,9 @@ try {
     }
     $resultPath = Join-Path $logDir ([guid]::NewGuid().ToString() + ".json")
     # Child process preserves discovery's exit 2/3/4 hard stops.
-    & (Join-Path $PSHOME "powershell.exe") -NoProfile -NonInteractive -File (Join-Path $PSScriptRoot "GENESIS_DISCOVER_RUNTIME_v01.ps1") -ResultPath $resultPath
+    $discoveryArgs = @('-NoProfile', '-NonInteractive', '-File', (Join-Path $PSScriptRoot "GENESIS_DISCOVER_RUNTIME_v01.ps1"), '-ResultPath', $resultPath)
+    if ($ProjectPath) { $discoveryArgs += @('-ProjectPath', $ProjectPath) }
+    & (Join-Path $PSHOME "powershell.exe") @discoveryArgs
     $rc = $LASTEXITCODE
     if ($rc -eq 0) {
         $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json

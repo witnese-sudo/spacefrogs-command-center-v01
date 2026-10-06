@@ -6,7 +6,8 @@ param(
         "C:\Users\Public\Documents"
     ),
     [string]$PreferredProjectName = "FROG3D_v01",
-    [string]$ResultPath = ""
+    [string]$ResultPath = "",
+    [string]$ProjectPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,7 +33,15 @@ if ($projects.Count -eq 0) {
 }
 
 $preferred = @($projects | Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) -eq $PreferredProjectName })
-if ($preferred.Count -eq 1) {
+if ($ProjectPath) {
+    # Explicit human selection must still be a real discovery candidate in approved roots.
+    $resolved = (Resolve-Path -LiteralPath $ProjectPath -ErrorAction Stop).ProviderPath
+    if ($projects -notcontains $resolved) {
+        Write-Host "[GENESIS] BLOCKED: Selected project is outside discovered candidates."
+        exit 6
+    }
+    $selected = $resolved
+} elseif ($preferred.Count -eq 1) {
     $selected = $preferred[0]
 } elseif ($preferred.Count -gt 1) {
     Write-Host "[GENESIS] BLOCKED: Multiple $PreferredProjectName projects found:"

@@ -8,7 +8,7 @@ $passed = 0
 function Assert($condition, $message) {
     if (-not $condition) { throw $message }
 }
-function Test-Discovery($name, $paths, $expectedCode, $expectedPath) {
+function Test-Discovery($name, $paths, $expectedCode, $expectedPath, $selectedPath = "") {
     $root = Join-Path $temp $name
     New-Item -ItemType Directory -Path $root | Out-Null
     foreach ($path in $paths) {
@@ -17,7 +17,9 @@ function Test-Discovery($name, $paths, $expectedCode, $expectedPath) {
         Set-Content -LiteralPath $file -Value '{}'
     }
     $result = Join-Path $root "result.json"
-    & $hostExe -NoProfile -File (Join-Path $scripts "GENESIS_DISCOVER_RUNTIME_v01.ps1") -Roots $root -ResultPath $result
+    $arguments = @('-NoProfile', '-File', (Join-Path $scripts "GENESIS_DISCOVER_RUNTIME_v01.ps1"), '-Roots', $root, '-ResultPath', $result)
+    if ($selectedPath) { $arguments += @('-ProjectPath', (Join-Path $root $selectedPath)) }
+    & $hostExe @arguments
     Assert ($LASTEXITCODE -eq $expectedCode) "$name exit code"
     if ($expectedCode -eq 0) {
         $data = Get-Content -LiteralPath $result -Raw | ConvertFrom-Json
@@ -41,8 +43,9 @@ try {
     Test-Discovery "preferred among others" @('a/FROG3D_v01.uproject', 'b/Other.uproject') 0 'a/FROG3D_v01.uproject'
     Test-Discovery "duplicate preferred" @('a/FROG3D_v01.uproject', 'b/FROG3D_v01.uproject') 3 $null
     Test-Discovery "ambiguous" @('a/One.uproject', 'b/Two.uproject') 4 $null
+    Test-Discovery "human selection among duplicates" @('a/FROG3D_v01.uproject', 'b/FROG3D_v01.uproject', 'Swamp.uproject') 0 'Swamp.uproject' 'Swamp.uproject'
     # Windows runner tests intercept launch; no real Unreal executable is run.
-    if ($env:OS -eq 'Windows_NT') {
+    if ([Environment]::OSVersion.Platform -eq 'Win32NT') {
         $oldProfile = $env:USERPROFILE; $oldLocal = $env:LOCALAPPDATA
         try {
             $env:USERPROFILE = Join-Path $temp 'runner-profile'
