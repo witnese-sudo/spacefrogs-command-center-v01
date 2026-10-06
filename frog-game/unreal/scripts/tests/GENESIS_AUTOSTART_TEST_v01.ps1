@@ -95,3 +95,6 @@ try {
 } finally {
     Remove-Item -LiteralPath $temp -Recurse -Force
 }
+
+# Expected negative cases must not leak their exit code to the CI host.
+exit 0
