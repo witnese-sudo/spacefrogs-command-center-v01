@@ -5,7 +5,8 @@ param(
         "$env:USERPROFILE\Downloads",
         "C:\Users\Public\Documents"
     ),
-    [string]$PreferredProjectName = "FROG3D_v01"
+    [string]$PreferredProjectName = "FROG3D_v01",
+    [string]$ResultPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -24,13 +25,13 @@ foreach ($root in $Roots) {
     }
 }
 
-$projects = $projects | Sort-Object -Unique
+$projects = @($projects | Sort-Object -Unique)
 if ($projects.Count -eq 0) {
     Write-Host "[GENESIS] BLOCKED: No .uproject found in approved roots."
     exit 2
 }
 
-$preferred = $projects | Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) -eq $PreferredProjectName }
+$preferred = @($projects | Where-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) -eq $PreferredProjectName })
 if ($preferred.Count -eq 1) {
     $selected = $preferred[0]
 } elseif ($preferred.Count -gt 1) {
@@ -93,6 +94,10 @@ $result = [ordered]@{
 
 $out = Join-Path $projectDir "genesis_runtime_bridge.generated.json"
 $result | ConvertTo-Json -Depth 6 | Set-Content -Path $out -Encoding UTF8
+# A caller-owned fresh result avoids reading an old manifest after a hard stop.
+if ($ResultPath) {
+    $result | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $ResultPath -Encoding UTF8
+}
 
 Write-Host "[GENESIS] Project resolved:"
 Write-Host "  $selected"
